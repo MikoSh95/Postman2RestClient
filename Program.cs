@@ -12,7 +12,34 @@ namespace Postman2RestClient
     {
         static void Main(string[] args)
         {
-            List<string> inputFilesPaths = new List<string>();
+
+            Console.WriteLine($"Provide file path to Postman global variables or leave empty to skip global variables");
+            string globalsFilePath = Console.ReadLine();
+
+            while (!File.Exists(globalsFilePath) && globalsFilePath != "")
+            {
+                Console.WriteLine($"File does not exist. Provide valid file path to Postman's global variables or leave empty to skip global variables");
+                globalsFilePath = Console.ReadLine();
+            }
+
+            Dictionary<string, Model.RestClient.Environment> environment = new Dictionary<string, Model.RestClient.Environment>();
+
+            if (globalsFilePath != "")
+            {
+
+                PostmanGlobals postmanGlobals = JsonConvert.DeserializeObject<PostmanGlobals>(File.ReadAllText(globalsFilePath));
+                environment.Add("$shared", new Model.RestClient.Environment());
+
+                foreach (PostmanKey key in postmanGlobals.Values)
+                {
+                    if (key.Enabled == true)
+                    {
+                        environment["$shared"].Add(key.Key, key.Value);
+                    }
+                }
+            }
+
+            List<string> globalsFilesPaths = new List<string>();
 
             Console.WriteLine("How many Postman's environments you want to convert?");
             int count = Convert.ToInt32(Console.ReadLine());
@@ -28,28 +55,26 @@ namespace Postman2RestClient
                     temp = Console.ReadLine();
                 }
 
-                inputFilesPaths.Add(temp);
+                globalsFilesPaths.Add(temp);
             }
 
-            Dictionary<string, Model.RestClient.Environment> restClientEnvs = new Dictionary<string, Model.RestClient.Environment>();
-
-            foreach (string path in inputFilesPaths)
+            foreach (string path in globalsFilesPaths)
             {
                 PostmanEnv postmanEnv = JsonConvert.DeserializeObject<PostmanEnv>(File.ReadAllText(path));
-                restClientEnvs.Add(postmanEnv.Name, new Model.RestClient.Environment());
+                environment.Add(postmanEnv.Name, new Model.RestClient.Environment());
 
                 foreach (PostmanKey key in postmanEnv.Values)
                 {
                     if (key.Enabled == true)
                     {
-                        restClientEnvs[postmanEnv.Name].Add(key.Key, key.Value);
+                        environment[postmanEnv.Name].Add(key.Key, key.Value);
                     }
                 }
             }
 
             VsCodeSettings vsCodeSettings = new VsCodeSettings()
             {
-                Envs = restClientEnvs
+                Envs = environment
             };
 
             string outputFile = JsonConvert.SerializeObject(vsCodeSettings, Formatting.Indented);
@@ -61,6 +86,7 @@ namespace Postman2RestClient
             }
 
             Console.WriteLine($"Output file saved at: {outputFilePath}");
+            Console.ReadKey();
         }
     }
 }
