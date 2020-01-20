@@ -31,12 +31,12 @@ namespace Postman2RestClient
                 inputFilesPaths.Add(temp);
             }
 
-            Dictionary<string, RestClientEnv> restClientEnvs = new Dictionary<string, RestClientEnv>();
+            Dictionary<string, Model.RestClient.Environment> restClientEnvs = new Dictionary<string, Model.RestClient.Environment>();
 
             foreach (string path in inputFilesPaths)
             {
                 PostmanEnv postmanEnv = JsonConvert.DeserializeObject<PostmanEnv>(File.ReadAllText(path));
-                restClientEnvs.Add(postmanEnv.Name, new RestClientEnv());
+                restClientEnvs.Add(postmanEnv.Name, new Model.RestClient.Environment());
 
                 foreach (PostmanKey key in postmanEnv.Values)
                 {
